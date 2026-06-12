@@ -3,18 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:lets_note/models/app_db.dart';
 import 'package:provider/provider.dart';
 
-class NotesPage extends StatefulWidget {
-  const NotesPage({super.key});
+class NotePage extends StatefulWidget {
+  const NotePage({super.key});
 
   @override
-  State<NotesPage> createState() => _NotesPageState();
+  State<NotePage> createState() => _NotePageState();
 }
 
-class _NotesPageState extends State<NotesPage> {
+class _NotePageState extends State<NotePage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _inputCtrl = TextEditingController();
   late final AppDatabase _db = context.read<AppDatabase>();
-  List<_NotesCard> notes = [];
+  List<_NoteCard> notes = [];
   int _noteCount = 0;
 
   @override
@@ -45,7 +45,7 @@ class _NotesPageState extends State<NotesPage> {
                     itemBuilder: (context, index) {
                       final note = notes[index];
 
-                      return _NotesCard(
+                      return _NoteCard(
                         id: note.id.toInt(),
                         title: note.title.toString(),
                         content: note.content.toString(),
@@ -100,12 +100,12 @@ class _NotesPageState extends State<NotesPage> {
   }
 }
 
-class _NotesCard extends StatelessWidget {
+class _NoteCard extends StatelessWidget {
   final int id;
   final String title;
   final String? content;
 
-  const _NotesCard({
+  const _NoteCard({
     required this.id,
     required this.title,
     required this.content,

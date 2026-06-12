@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lets_note/models/app_db.dart';
-import 'package:lets_note/pages/notes.dart';
 import 'package:provider/provider.dart';
+
+import 'package:lets_note/pages/note/note_list.dart';
+import 'package:lets_note/pages/note/note_add.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +23,7 @@ class Home extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Let's Note!"), centerTitle: true),
-      body: NotesPage(),
+      body: NotePage(),
       // floatingActionButton: FloatingActionButton(
       //   onPressed: () => {},
       //   child: Icon(Icons.fiber_manual_record_rounded),
