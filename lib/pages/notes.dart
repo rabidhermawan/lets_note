@@ -1,4 +1,7 @@
+import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
+import 'package:lets_note/models/app_db.dart';
+import 'package:provider/provider.dart';
 
 class NotesPage extends StatefulWidget {
   const NotesPage({super.key});
@@ -10,23 +13,56 @@ class NotesPage extends StatefulWidget {
 class _NotesPageState extends State<NotesPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _inputCtrl = TextEditingController();
+  late final AppDatabase _db = context.read<AppDatabase>();
   List<_NotesCard> notes = [];
-  int _counter = 1;
+  int _noteCount = 0;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [for (var x in notes) x],
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+            child: FutureBuilder<List<NoteData>>(
+              future: _db.getAllNotes(),
+              builder: (context, snapshot) {
+                final List<NoteData>? notes = snapshot.data;
+
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(child: Text(snapshot.error.toString()));
+                }
+
+                if (notes != null) {
+                  _noteCount = notes.length;
+
+                  return ListView.builder(
+                    itemCount: notes.length,
+                    itemBuilder: (context, index) {
+                      final note = notes[index];
+
+                      return _NotesCard(
+                        id: note.id.toInt(),
+                        title: note.title.toString(),
+                        content: note.content.toString(),
+                      );
+                    },
+                  );
+                } else {
+                  return Center(child: Text("No notes"));
+                }
+              },
+            ),
           ),
         ),
         Form(
           key: _formKey,
           child: Padding(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 24.0),
             child: Column(
               children: [
                 TextFormField(
@@ -36,13 +72,14 @@ class _NotesPageState extends State<NotesPage> {
                       ? "Insert your text"
                       : null,
                   onSaved: (value) => setState(() {
-                    notes.add(
-                      _NotesCard(
-                        title: "Note #$_counter",
-                        content: _inputCtrl.text,
+                    _db.insertNote(
+                      NoteCompanion(
+                        title: Value("Note #$_noteCount"),
+                        content: Value(_inputCtrl.text),
+                        createdAt: Value(DateTime.now()),
                       ),
                     );
-                    _counter += 1;
+                    _noteCount++;
                   }),
                 ),
                 ElevatedButton(
@@ -64,10 +101,15 @@ class _NotesPageState extends State<NotesPage> {
 }
 
 class _NotesCard extends StatelessWidget {
+  final int id;
   final String title;
-  final String content;
+  final String? content;
 
-  const _NotesCard({required this.title, required this.content});
+  const _NotesCard({
+    required this.id,
+    required this.title,
+    required this.content,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +121,7 @@ class _NotesCard extends StatelessWidget {
         color: Colors.cyan[100],
         borderRadius: BorderRadius.circular(8.0),
       ),
-      child: Column(children: [Text(title), Text(content)]),
+      child: Column(children: [Text(title), Text(content!)]),
     );
   }
 }

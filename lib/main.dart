@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:lets_note/models/app_db.dart';
 import 'package:lets_note/pages/notes.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(MaterialApp(home: Home()));
+  runApp(
+    Provider<AppDatabase>(
+      create: (context) => AppDatabase(),
+      dispose: (context, value) => AppDatabase().close(),
+      child: MaterialApp(home: Home()),
+    ),
+  );
 }
 
 class Home extends StatelessWidget {
