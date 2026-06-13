@@ -16,9 +16,6 @@ class NoteList extends StatefulWidget {
 
 class _NoteListState extends State<NoteList> {
   late final AppDatabase _db = context.read<AppDatabase>();
-  bool isInitialized = false;
-
-  List<_NoteCard> notes = [];
 
   @override
   Widget build(BuildContext context) {
@@ -62,32 +59,6 @@ class _NoteListState extends State<NoteList> {
             ),
           ),
         ),
-        // Form(
-        //   key: _formKey,
-        //   child: Padding(
-        //     padding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 24.0),
-        //     child: Column(
-        //       children: [
-        //         TextFormField(
-        //           controller: _inputCtrl,
-        //           decoration: InputDecoration(label: Text("Content")),
-        //           validator: (value) => value == null || value.isEmpty
-        //               ? "Insert your text"
-        //               : null,
-        //         ),
-        //         ElevatedButton(
-        //           onPressed: () {
-        //             if (_formKey.currentState!.validate()) {
-        //               _formKey.currentState!.save();
-        //               _formKey.currentState!.reset();
-        //             }
-        //           },
-        //           child: Text("Save"),
-        //         ),
-        //       ],
-        //     ),
-        //   ),
-        // ),
       ],
     );
   }

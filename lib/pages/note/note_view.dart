@@ -28,22 +28,24 @@ class _NoteViewState extends State<NoteView> {
 
   @override
   void initState() {
-    _noteTitleController.text =
-        widget._rowObject.title.toString() == Value.absent().toString()
+    _noteTitleController.text = widget._rowObject.title == Value.absent()
         ? ""
-        : widget._rowObject.title.toString();
-    _noteContentController.text =
-        widget._rowObject.content.toString() == Value.absent().toString()
+        : widget._rowObject.title.value;
+    _noteContentController.text = (widget._rowObject.content == Value.absent()
         ? ""
-        : widget._rowObject.content.toString();
-
+        : widget._rowObject.content.value)!;
     super.initState();
   }
 
   @override
   void dispose() {
-    if ((_noteTitleController.text != widget._rowObject.title.toString()) ||
-        (_noteContentController.text != widget._rowObject.content.toString())) {
+    if ((widget._rowObject.title == Value.absent() &&
+            widget._rowObject.content == Value.absent()) ||
+        (widget._rowObject.title != Value.absent() &&
+                (_noteTitleController.text != widget._rowObject.title.value) ||
+            widget._rowObject.title != Value.absent() &&
+                (_noteContentController.text !=
+                    widget._rowObject.content.value))) {
       _db.insertOrUpdateNote(
         widget._rowObject.copyWith(
           title: Value(_noteTitleController.text.toString()),
