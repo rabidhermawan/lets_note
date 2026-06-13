@@ -31,6 +31,19 @@ class AppDatabase extends _$AppDatabase {
   Future<List<NoteData>> getAllNotes() async => await select(note).get();
   Stream<List<NoteData>> watchAllNotes() => select(note).watch();
 
+  Stream<List<NoteData>> watchNotesByCompletion({
+    required bool all,
+    required bool completion,
+  }) {
+    if (all) {
+      return select(note).watch();
+    } else {
+      return (select(
+        note,
+      )..where((t) => t.reminderComplete.equals(completion))).watch();
+    }
+  }
+
   Future<NoteData> getByID(int id) async =>
       await (select(note)..where((t) => t.id.equals(id))).getSingle();
 

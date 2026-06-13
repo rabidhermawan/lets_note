@@ -17,16 +17,45 @@ class ReminderList extends StatefulWidget {
 
 class _ReminderListState extends State<ReminderList> {
   late final AppDatabase _db = context.read<AppDatabase>();
+  final List<bool> _filterState = <bool>[true, false, false];
+  static const List<Widget> _state = <Widget>[
+    Text('All'),
+    Text('Done'),
+    Text('Not Done'),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
+        ToggleButtons(
+          direction: Axis.horizontal,
+          onPressed: (int index) {
+            setState(() {
+              // The button that is tapped is set to true, and the others to false.
+              for (int i = 0; i < _filterState.length; i++) {
+                _filterState[i] = i == index;
+              }
+            });
+          },
+          borderRadius: const .all(Radius.circular(8)),
+          selectedBorderColor: Colors.red[700],
+          selectedColor: Colors.white,
+          fillColor: Colors.red[200],
+          color: Colors.red[400],
+          constraints: const BoxConstraints(minHeight: 40.0, minWidth: 80.0),
+          isSelected: _filterState,
+          children: _state,
+        ),
+
         Expanded(
           child: Padding(
             padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
             child: StreamBuilder<List<NoteData>>(
-              stream: _db.watchAllNotes(),
+              stream: _db.watchNotesByCompletion(
+                all: _filterState[0],
+                completion: _filterState[1],
+              ),
               builder: (context, snapshot) {
                 final List<NoteData>? notes = snapshot.data;
                 if (snapshot.connectionState != ConnectionState.active) {

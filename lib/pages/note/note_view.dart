@@ -68,9 +68,11 @@ class _NoteViewState extends State<NoteView> {
     // }
 
     if ((widget._rowObject.title == Value.absent() &&
-            widget._rowObject.content == Value.absent() &&
-            _noteTitleController.text != "" &&
-            _noteContentController.text != "") ||
+            widget._rowObject.content == Value.absent()
+        // &&
+        // _noteTitleController.text != "" &&
+        // _noteContentController.text != ""
+        ) ||
         (widget._rowObject.title != Value.absent() &&
                 (_noteTitleController.text != widget._rowObject.title.value) ||
             widget._rowObject.title != Value.absent() &&
