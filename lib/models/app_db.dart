@@ -22,9 +22,10 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  // Create
-  Future<int> insertNote(NoteCompanion entry) async =>
-      await into(note).insert(entry);
+  // Create/Update
+  Future<int> insertOrUpdateNote(NoteCompanion entry) {
+    return into(note).insertOnConflictUpdate(entry);
+  }
 
   // Read
   Future<List<NoteData>> getAllNotes() async => await select(note).get();
@@ -34,9 +35,9 @@ class AppDatabase extends _$AppDatabase {
       await (select(note)..where((t) => t.id.equals(id))).getSingle();
 
   // Update
-  Future updateNote(NoteCompanion entry) async {
-    await update(note).replace(entry);
-  }
+  // Future updateNote(NoteCompanion entry) async {
+  //   await update(note).replace(entry);
+  // }
 
   // Delete
   Future deleteNote(int id) async =>

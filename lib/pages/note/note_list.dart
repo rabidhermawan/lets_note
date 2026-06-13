@@ -1,4 +1,3 @@
-import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -16,13 +15,10 @@ class NoteList extends StatefulWidget {
 }
 
 class _NoteListState extends State<NoteList> {
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _inputCtrl = TextEditingController();
   late final AppDatabase _db = context.read<AppDatabase>();
   bool isInitialized = false;
 
   List<_NoteCard> notes = [];
-  int _noteCount = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -35,13 +31,15 @@ class _NoteListState extends State<NoteList> {
               stream: _db.watchAllNotes(),
               builder: (context, snapshot) {
                 final List<NoteData>? notes = snapshot.data;
+
+                // Jadi ternyata disini kalo ngecompare connectionState.done
+                // gak bakal selesai2 soalnya stream expect the connection to be
+                // active, not done
                 if (snapshot.connectionState != ConnectionState.active) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
                   return Center(child: Text(snapshot.error.toString()));
                 } else if (notes != null) {
-                  _noteCount = notes.length;
-
                   return GridView.builder(
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
@@ -50,7 +48,7 @@ class _NoteListState extends State<NoteList> {
                           mainAxisSpacing: 10, // Spacing between rows
                         ),
                     // primary: false
-                    itemCount: _noteCount,
+                    itemCount: notes.length,
                     itemBuilder: (context, index) {
                       final note = notes[index];
 
@@ -64,42 +62,32 @@ class _NoteListState extends State<NoteList> {
             ),
           ),
         ),
-        Form(
-          key: _formKey,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 24.0),
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: _inputCtrl,
-                  decoration: InputDecoration(label: Text("Content")),
-                  validator: (value) => value == null || value.isEmpty
-                      ? "Insert your text"
-                      : null,
-                  onSaved: (value) => setState(() {
-                    _db.insertNote(
-                      NoteCompanion(
-                        title: Value("Note #$_noteCount"),
-                        content: Value(_inputCtrl.text),
-                        createdAt: Value(DateTime.now()),
-                      ),
-                    );
-                    _noteCount++;
-                  }),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      _formKey.currentState!.save();
-                      _formKey.currentState!.reset();
-                    }
-                  },
-                  child: Text("Save"),
-                ),
-              ],
-            ),
-          ),
-        ),
+        // Form(
+        //   key: _formKey,
+        //   child: Padding(
+        //     padding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 24.0),
+        //     child: Column(
+        //       children: [
+        //         TextFormField(
+        //           controller: _inputCtrl,
+        //           decoration: InputDecoration(label: Text("Content")),
+        //           validator: (value) => value == null || value.isEmpty
+        //               ? "Insert your text"
+        //               : null,
+        //         ),
+        //         ElevatedButton(
+        //           onPressed: () {
+        //             if (_formKey.currentState!.validate()) {
+        //               _formKey.currentState!.save();
+        //               _formKey.currentState!.reset();
+        //             }
+        //           },
+        //           child: Text("Save"),
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }

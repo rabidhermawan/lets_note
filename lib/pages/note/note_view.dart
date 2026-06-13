@@ -44,12 +44,14 @@ class _NoteViewState extends State<NoteView> {
   void dispose() {
     if ((_noteTitleController.text != widget._rowObject.title.toString()) ||
         (_noteContentController.text != widget._rowObject.content.toString())) {
-      _db.updateNote(
+      _db.insertOrUpdateNote(
         widget._rowObject.copyWith(
           title: Value(_noteTitleController.text.toString()),
           content: Value(_noteContentController.text.toString()),
         ),
       );
+
+      debugPrint("NOTE ADDED!");
     }
 
     _noteTitleController.dispose();
