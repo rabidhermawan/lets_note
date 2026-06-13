@@ -28,12 +28,15 @@ class AppDatabase extends _$AppDatabase {
 
   // Read
   Future<List<NoteData>> getAllNotes() async => await select(note).get();
+  Stream<List<NoteData>> watchAllNotes() => select(note).watch();
+
   Future<NoteData> getByID(int id) async =>
       await (select(note)..where((t) => t.id.equals(id))).getSingle();
 
   // Update
-  Future updateNote(NoteCompanion entry) async =>
-      await update(note).replace(entry);
+  Future updateNote(NoteCompanion entry) async {
+    await update(note).replace(entry);
+  }
 
   // Delete
   Future deleteNote(int id) async =>

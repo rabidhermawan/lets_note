@@ -1,19 +1,26 @@
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
-import 'package:lets_note/models/app_db.dart';
 import 'package:provider/provider.dart';
 
-class NotePage extends StatefulWidget {
-  const NotePage({super.key});
+// Database
+import 'package:lets_note/models/app_db.dart';
+
+// Route
+import 'package:lets_note/pages/note/note_view.dart';
+
+class NoteList extends StatefulWidget {
+  const NoteList({super.key});
 
   @override
-  State<NotePage> createState() => _NotePageState();
+  State<NoteList> createState() => _NoteListState();
 }
 
-class _NotePageState extends State<NotePage> {
+class _NoteListState extends State<NoteList> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _inputCtrl = TextEditingController();
   late final AppDatabase _db = context.read<AppDatabase>();
+  bool isInitialized = false;
+
   List<_NoteCard> notes = [];
   int _noteCount = 0;
 
@@ -24,32 +31,30 @@ class _NotePageState extends State<NotePage> {
         Expanded(
           child: Padding(
             padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-            child: FutureBuilder<List<NoteData>>(
-              future: _db.getAllNotes(),
+            child: StreamBuilder<List<NoteData>>(
+              stream: _db.watchAllNotes(),
               builder: (context, snapshot) {
                 final List<NoteData>? notes = snapshot.data;
-
-                if (snapshot.connectionState != ConnectionState.done) {
+                if (snapshot.connectionState != ConnectionState.active) {
                   return const Center(child: CircularProgressIndicator());
-                }
-
-                if (snapshot.hasError) {
+                } else if (snapshot.hasError) {
                   return Center(child: Text(snapshot.error.toString()));
-                }
-
-                if (notes != null) {
+                } else if (notes != null) {
                   _noteCount = notes.length;
 
-                  return ListView.builder(
-                    itemCount: notes.length,
+                  return GridView.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2, // Number of columns
+                          crossAxisSpacing: 10, // Spacing between columns
+                          mainAxisSpacing: 10, // Spacing between rows
+                        ),
+                    // primary: false
+                    itemCount: _noteCount,
                     itemBuilder: (context, index) {
                       final note = notes[index];
 
-                      return _NoteCard(
-                        id: note.id.toInt(),
-                        title: note.title.toString(),
-                        content: note.content.toString(),
-                      );
+                      return _NoteCard(rowObject: note);
                     },
                   );
                 } else {
@@ -101,27 +106,37 @@ class _NotePageState extends State<NotePage> {
 }
 
 class _NoteCard extends StatelessWidget {
-  final int id;
-  final String title;
-  final String? content;
+  final NoteData _rowObject;
 
-  const _NoteCard({
-    required this.id,
-    required this.title,
-    required this.content,
-  });
+  const _NoteCard({required this._rowObject});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(12.0),
-      margin: const EdgeInsets.only(top: 8.0),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.cyan[100],
-        borderRadius: BorderRadius.circular(8.0),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                NoteView(rowObject: _rowObject.toCompanion(true)),
+          ),
+        );
+      },
+      child: Container(
+        padding: EdgeInsets.all(12.0),
+        margin: const EdgeInsets.only(top: 8.0),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.cyan[100],
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        child: Column(
+          children: [
+            Text(_rowObject.title.toString()),
+            Text(_rowObject.content.toString()),
+          ],
+        ),
       ),
-      child: Column(children: [Text(title), Text(content!)]),
     );
   }
 }
