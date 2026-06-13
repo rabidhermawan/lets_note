@@ -28,9 +28,9 @@ class _NoteViewState extends State<NoteView> {
 
   @override
   void initState() {
-    _noteTitleController.text = widget._rowObject.title == Value.absent()
+    _noteTitleController.text = (widget._rowObject.title == Value.absent()
         ? ""
-        : widget._rowObject.title.value;
+        : widget._rowObject.title.value)!;
     _noteContentController.text = (widget._rowObject.content == Value.absent()
         ? ""
         : widget._rowObject.content.value)!;
@@ -39,8 +39,38 @@ class _NoteViewState extends State<NoteView> {
 
   @override
   void dispose() {
+    // if ((widget._rowObject.title != Value.absent() &&
+    //         (_noteTitleController.text == "") ||
+    //     widget._rowObject.title != Value.absent() &&
+    //         (_noteContentController.text == ""))) {
+    //   showDialog(
+    //     context: context,
+    //     builder: (context) => AlertDialog(
+    //       title: Text(
+    //         "Delete ${widget._rowObject.title.value == "" ? "" : widget._rowObject.title}",
+    //       ),
+    //       content: const Text("Are you sure you want to delete it?"),
+    //       actions: [
+    //         TextButton(
+    //           onPressed: () {
+    //             _db.deleteNote(widget._rowObject.id.value);
+    //             Navigator.pop(context);
+    //           },
+    //           child: const Text('OK'),
+    //         ),
+    //         TextButton(
+    //           onPressed: () => Navigator.pop(context),
+    //           child: const Text('Cancel'),
+    //         ),
+    //       ],
+    //     ),
+    //   );
+    // }
+
     if ((widget._rowObject.title == Value.absent() &&
-            widget._rowObject.content == Value.absent()) ||
+            widget._rowObject.content == Value.absent() &&
+            _noteTitleController.text != "" &&
+            _noteContentController.text != "") ||
         (widget._rowObject.title != Value.absent() &&
                 (_noteTitleController.text != widget._rowObject.title.value) ||
             widget._rowObject.title != Value.absent() &&
@@ -52,7 +82,6 @@ class _NoteViewState extends State<NoteView> {
           content: Value(_noteContentController.text.toString()),
         ),
       );
-
       debugPrint("NOTE ADDED!");
     }
 

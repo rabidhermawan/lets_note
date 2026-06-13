@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -64,6 +65,12 @@ class _ReminderCard extends StatefulWidget {
 class _ReminderCardState extends State<_ReminderCard> {
   bool _foo = false;
 
+  @override
+  void initState() {
+    _foo = widget._rowObject.reminderComplete;
+    super.initState();
+  }
+
   late final AppDatabase _db = context.read<AppDatabase>();
   @override
   Widget build(BuildContext context) {
@@ -82,7 +89,11 @@ class _ReminderCardState extends State<_ReminderCard> {
             value: _foo,
             onChanged: (value) {
               setState(() {
-                _foo = value!;
+                final rowCompanion = widget._rowObject.toCompanion(true);
+                _db.insertOrUpdateNote(
+                  rowCompanion.copyWith(reminderComplete: Value(value!)),
+                );
+                _foo = value;
               });
             },
           ),
@@ -113,7 +124,9 @@ class _ReminderCardState extends State<_ReminderCard> {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text("Delete Reminder"),
+                  title: Text(
+                    "Delete ${widget._rowObject.title == "" ? "Reminder" : widget._rowObject.title}",
+                  ),
                   content: const Text("Are you sure you want to delete it?"),
                   actions: [
                     TextButton(

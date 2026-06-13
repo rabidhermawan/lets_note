@@ -26,10 +26,9 @@ class $NoteTable extends Note with TableInfo<$NoteTable, NoteData> {
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
     'title',
     aliasedName,
-    false,
-    additionalChecks: GeneratedColumn.checkTextLength(minTextLength: 1),
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _contentMeta = const VerificationMeta(
     'content',
@@ -54,6 +53,36 @@ class $NoteTable extends Note with TableInfo<$NoteTable, NoteData> {
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _isReminderMeta = const VerificationMeta(
+    'isReminder',
+  );
+  @override
+  late final GeneratedColumn<bool> isReminder = GeneratedColumn<bool>(
+    'is_reminder',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_reminder" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _reminderCompleteMeta = const VerificationMeta(
+    'reminderComplete',
+  );
+  @override
+  late final GeneratedColumn<bool> reminderComplete = GeneratedColumn<bool>(
+    'reminder_complete',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("reminder_complete" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _dateReminderMeta = const VerificationMeta(
     'dateReminder',
   );
@@ -71,6 +100,8 @@ class $NoteTable extends Note with TableInfo<$NoteTable, NoteData> {
     title,
     content,
     createdAt,
+    isReminder,
+    reminderComplete,
     dateReminder,
   ];
   @override
@@ -93,8 +124,6 @@ class $NoteTable extends Note with TableInfo<$NoteTable, NoteData> {
         _titleMeta,
         title.isAcceptableOrUnknown(data['title']!, _titleMeta),
       );
-    } else if (isInserting) {
-      context.missing(_titleMeta);
     }
     if (data.containsKey('body')) {
       context.handle(
@@ -106,6 +135,21 @@ class $NoteTable extends Note with TableInfo<$NoteTable, NoteData> {
       context.handle(
         _createdAtMeta,
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('is_reminder')) {
+      context.handle(
+        _isReminderMeta,
+        isReminder.isAcceptableOrUnknown(data['is_reminder']!, _isReminderMeta),
+      );
+    }
+    if (data.containsKey('reminder_complete')) {
+      context.handle(
+        _reminderCompleteMeta,
+        reminderComplete.isAcceptableOrUnknown(
+          data['reminder_complete']!,
+          _reminderCompleteMeta,
+        ),
       );
     }
     if (data.containsKey('date_reminder')) {
@@ -133,7 +177,7 @@ class $NoteTable extends Note with TableInfo<$NoteTable, NoteData> {
       title: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}title'],
-      )!,
+      ),
       content: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}body'],
@@ -141,6 +185,14 @@ class $NoteTable extends Note with TableInfo<$NoteTable, NoteData> {
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
+      )!,
+      isReminder: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_reminder'],
+      )!,
+      reminderComplete: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}reminder_complete'],
       )!,
       dateReminder: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
@@ -157,26 +209,34 @@ class $NoteTable extends Note with TableInfo<$NoteTable, NoteData> {
 
 class NoteData extends DataClass implements Insertable<NoteData> {
   final int id;
-  final String title;
+  final String? title;
   final String? content;
   final DateTime createdAt;
+  final bool isReminder;
+  final bool reminderComplete;
   final DateTime? dateReminder;
   const NoteData({
     required this.id,
-    required this.title,
+    this.title,
     this.content,
     required this.createdAt,
+    required this.isReminder,
+    required this.reminderComplete,
     this.dateReminder,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
-    map['title'] = Variable<String>(title);
+    if (!nullToAbsent || title != null) {
+      map['title'] = Variable<String>(title);
+    }
     if (!nullToAbsent || content != null) {
       map['body'] = Variable<String>(content);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
+    map['is_reminder'] = Variable<bool>(isReminder);
+    map['reminder_complete'] = Variable<bool>(reminderComplete);
     if (!nullToAbsent || dateReminder != null) {
       map['date_reminder'] = Variable<DateTime>(dateReminder);
     }
@@ -186,11 +246,15 @@ class NoteData extends DataClass implements Insertable<NoteData> {
   NoteCompanion toCompanion(bool nullToAbsent) {
     return NoteCompanion(
       id: Value(id),
-      title: Value(title),
+      title: title == null && nullToAbsent
+          ? const Value.absent()
+          : Value(title),
       content: content == null && nullToAbsent
           ? const Value.absent()
           : Value(content),
       createdAt: Value(createdAt),
+      isReminder: Value(isReminder),
+      reminderComplete: Value(reminderComplete),
       dateReminder: dateReminder == null && nullToAbsent
           ? const Value.absent()
           : Value(dateReminder),
@@ -204,9 +268,11 @@ class NoteData extends DataClass implements Insertable<NoteData> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return NoteData(
       id: serializer.fromJson<int>(json['id']),
-      title: serializer.fromJson<String>(json['title']),
+      title: serializer.fromJson<String?>(json['title']),
       content: serializer.fromJson<String?>(json['content']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      isReminder: serializer.fromJson<bool>(json['isReminder']),
+      reminderComplete: serializer.fromJson<bool>(json['reminderComplete']),
       dateReminder: serializer.fromJson<DateTime?>(json['dateReminder']),
     );
   }
@@ -215,24 +281,30 @@ class NoteData extends DataClass implements Insertable<NoteData> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'title': serializer.toJson<String>(title),
+      'title': serializer.toJson<String?>(title),
       'content': serializer.toJson<String?>(content),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'isReminder': serializer.toJson<bool>(isReminder),
+      'reminderComplete': serializer.toJson<bool>(reminderComplete),
       'dateReminder': serializer.toJson<DateTime?>(dateReminder),
     };
   }
 
   NoteData copyWith({
     int? id,
-    String? title,
+    Value<String?> title = const Value.absent(),
     Value<String?> content = const Value.absent(),
     DateTime? createdAt,
+    bool? isReminder,
+    bool? reminderComplete,
     Value<DateTime?> dateReminder = const Value.absent(),
   }) => NoteData(
     id: id ?? this.id,
-    title: title ?? this.title,
+    title: title.present ? title.value : this.title,
     content: content.present ? content.value : this.content,
     createdAt: createdAt ?? this.createdAt,
+    isReminder: isReminder ?? this.isReminder,
+    reminderComplete: reminderComplete ?? this.reminderComplete,
     dateReminder: dateReminder.present ? dateReminder.value : this.dateReminder,
   );
   NoteData copyWithCompanion(NoteCompanion data) {
@@ -241,6 +313,12 @@ class NoteData extends DataClass implements Insertable<NoteData> {
       title: data.title.present ? data.title.value : this.title,
       content: data.content.present ? data.content.value : this.content,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      isReminder: data.isReminder.present
+          ? data.isReminder.value
+          : this.isReminder,
+      reminderComplete: data.reminderComplete.present
+          ? data.reminderComplete.value
+          : this.reminderComplete,
       dateReminder: data.dateReminder.present
           ? data.dateReminder.value
           : this.dateReminder,
@@ -254,13 +332,23 @@ class NoteData extends DataClass implements Insertable<NoteData> {
           ..write('title: $title, ')
           ..write('content: $content, ')
           ..write('createdAt: $createdAt, ')
+          ..write('isReminder: $isReminder, ')
+          ..write('reminderComplete: $reminderComplete, ')
           ..write('dateReminder: $dateReminder')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, title, content, createdAt, dateReminder);
+  int get hashCode => Object.hash(
+    id,
+    title,
+    content,
+    createdAt,
+    isReminder,
+    reminderComplete,
+    dateReminder,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -269,34 +357,44 @@ class NoteData extends DataClass implements Insertable<NoteData> {
           other.title == this.title &&
           other.content == this.content &&
           other.createdAt == this.createdAt &&
+          other.isReminder == this.isReminder &&
+          other.reminderComplete == this.reminderComplete &&
           other.dateReminder == this.dateReminder);
 }
 
 class NoteCompanion extends UpdateCompanion<NoteData> {
   final Value<int> id;
-  final Value<String> title;
+  final Value<String?> title;
   final Value<String?> content;
   final Value<DateTime> createdAt;
+  final Value<bool> isReminder;
+  final Value<bool> reminderComplete;
   final Value<DateTime?> dateReminder;
   const NoteCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
     this.content = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.isReminder = const Value.absent(),
+    this.reminderComplete = const Value.absent(),
     this.dateReminder = const Value.absent(),
   });
   NoteCompanion.insert({
     this.id = const Value.absent(),
-    required String title,
+    this.title = const Value.absent(),
     this.content = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.isReminder = const Value.absent(),
+    this.reminderComplete = const Value.absent(),
     this.dateReminder = const Value.absent(),
-  }) : title = Value(title);
+  });
   static Insertable<NoteData> custom({
     Expression<int>? id,
     Expression<String>? title,
     Expression<String>? content,
     Expression<DateTime>? createdAt,
+    Expression<bool>? isReminder,
+    Expression<bool>? reminderComplete,
     Expression<DateTime>? dateReminder,
   }) {
     return RawValuesInsertable({
@@ -304,15 +402,19 @@ class NoteCompanion extends UpdateCompanion<NoteData> {
       if (title != null) 'title': title,
       if (content != null) 'body': content,
       if (createdAt != null) 'created_at': createdAt,
+      if (isReminder != null) 'is_reminder': isReminder,
+      if (reminderComplete != null) 'reminder_complete': reminderComplete,
       if (dateReminder != null) 'date_reminder': dateReminder,
     });
   }
 
   NoteCompanion copyWith({
     Value<int>? id,
-    Value<String>? title,
+    Value<String?>? title,
     Value<String?>? content,
     Value<DateTime>? createdAt,
+    Value<bool>? isReminder,
+    Value<bool>? reminderComplete,
     Value<DateTime?>? dateReminder,
   }) {
     return NoteCompanion(
@@ -320,6 +422,8 @@ class NoteCompanion extends UpdateCompanion<NoteData> {
       title: title ?? this.title,
       content: content ?? this.content,
       createdAt: createdAt ?? this.createdAt,
+      isReminder: isReminder ?? this.isReminder,
+      reminderComplete: reminderComplete ?? this.reminderComplete,
       dateReminder: dateReminder ?? this.dateReminder,
     );
   }
@@ -339,6 +443,12 @@ class NoteCompanion extends UpdateCompanion<NoteData> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (isReminder.present) {
+      map['is_reminder'] = Variable<bool>(isReminder.value);
+    }
+    if (reminderComplete.present) {
+      map['reminder_complete'] = Variable<bool>(reminderComplete.value);
+    }
     if (dateReminder.present) {
       map['date_reminder'] = Variable<DateTime>(dateReminder.value);
     }
@@ -352,6 +462,8 @@ class NoteCompanion extends UpdateCompanion<NoteData> {
           ..write('title: $title, ')
           ..write('content: $content, ')
           ..write('createdAt: $createdAt, ')
+          ..write('isReminder: $isReminder, ')
+          ..write('reminderComplete: $reminderComplete, ')
           ..write('dateReminder: $dateReminder')
           ..write(')'))
         .toString();
@@ -372,17 +484,21 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 typedef $$NoteTableCreateCompanionBuilder =
     NoteCompanion Function({
       Value<int> id,
-      required String title,
+      Value<String?> title,
       Value<String?> content,
       Value<DateTime> createdAt,
+      Value<bool> isReminder,
+      Value<bool> reminderComplete,
       Value<DateTime?> dateReminder,
     });
 typedef $$NoteTableUpdateCompanionBuilder =
     NoteCompanion Function({
       Value<int> id,
-      Value<String> title,
+      Value<String?> title,
       Value<String?> content,
       Value<DateTime> createdAt,
+      Value<bool> isReminder,
+      Value<bool> reminderComplete,
       Value<DateTime?> dateReminder,
     });
 
@@ -411,6 +527,16 @@ class $$NoteTableFilterComposer extends Composer<_$AppDatabase, $NoteTable> {
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isReminder => $composableBuilder(
+    column: $table.isReminder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get reminderComplete => $composableBuilder(
+    column: $table.reminderComplete,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -448,6 +574,16 @@ class $$NoteTableOrderingComposer extends Composer<_$AppDatabase, $NoteTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isReminder => $composableBuilder(
+    column: $table.isReminder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get reminderComplete => $composableBuilder(
+    column: $table.reminderComplete,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get dateReminder => $composableBuilder(
     column: $table.dateReminder,
     builder: (column) => ColumnOrderings(column),
@@ -474,6 +610,16 @@ class $$NoteTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isReminder => $composableBuilder(
+    column: $table.isReminder,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get reminderComplete => $composableBuilder(
+    column: $table.reminderComplete,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get dateReminder => $composableBuilder(
     column: $table.dateReminder,
@@ -510,29 +656,37 @@ class $$NoteTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                Value<String> title = const Value.absent(),
+                Value<String?> title = const Value.absent(),
                 Value<String?> content = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> isReminder = const Value.absent(),
+                Value<bool> reminderComplete = const Value.absent(),
                 Value<DateTime?> dateReminder = const Value.absent(),
               }) => NoteCompanion(
                 id: id,
                 title: title,
                 content: content,
                 createdAt: createdAt,
+                isReminder: isReminder,
+                reminderComplete: reminderComplete,
                 dateReminder: dateReminder,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                required String title,
+                Value<String?> title = const Value.absent(),
                 Value<String?> content = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> isReminder = const Value.absent(),
+                Value<bool> reminderComplete = const Value.absent(),
                 Value<DateTime?> dateReminder = const Value.absent(),
               }) => NoteCompanion.insert(
                 id: id,
                 title: title,
                 content: content,
                 createdAt: createdAt,
+                isReminder: isReminder,
+                reminderComplete: reminderComplete,
                 dateReminder: dateReminder,
               ),
           withReferenceMapper: (p0) => p0
