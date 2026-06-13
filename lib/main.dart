@@ -40,7 +40,7 @@ class Home extends StatelessWidget {
             ),
           ),
         },
-        child: Icon(Icons.fiber_manual_record_rounded),
+        child: Icon(Icons.check_circle_outline_rounded),
       ),
     );
   }
