@@ -96,7 +96,6 @@ class _ReminderCardState extends State<_ReminderCard> {
 
   @override
   void initState() {
-    _foo = widget._rowObject.reminderComplete;
     super.initState();
   }
 
@@ -115,14 +114,13 @@ class _ReminderCardState extends State<_ReminderCard> {
         children: [
           Checkbox(
             checkColor: Colors.white,
-            value: _foo,
+            value: widget._rowObject.reminderComplete,
             onChanged: (value) {
               setState(() {
                 final rowCompanion = widget._rowObject.toCompanion(true);
                 _db.insertOrUpdateNote(
                   rowCompanion.copyWith(reminderComplete: Value(value!)),
                 );
-                _foo = value;
               });
             },
           ),
