@@ -19,6 +19,33 @@ class ReminderView extends StatefulWidget {
   State<ReminderView> createState() => _ReminderViewState();
 }
 
+// class DialogExample extends StatelessWidget {
+//   const DialogExample({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return showDialog<String(
+//         context: context,
+//         builder: (BuildContext context) => AlertDialog(
+//           title: const Text('AlertDialog Title'),
+//           content: SingleChildScrollView(child:Column(children: Text('AlertDialog description'))),
+//           actions: <Widget>[
+//             TextButton(
+//               onPressed: () => Navigator.pop(context, 'Cancel'),
+//               child: const Text('Cancel'),
+//             ),
+//             TextButton(
+//               onPressed: () => Navigator.pop(context, 'OK'),
+//               child: const Text('OK'),
+//             ),
+//           ],
+//         ),
+//       ),
+//       child: const Text('Show Dialog'),
+//     );
+//   }
+// }
+
 class _ReminderViewState extends State<ReminderView> {
   final _formKey = GlobalKey<FormState>();
 
@@ -27,6 +54,7 @@ class _ReminderViewState extends State<ReminderView> {
   late DateTime? _noteDeadlineDate;
   late bool? _reminderComplete;
   bool _toDelete = false;
+  bool _hasTag = true;
 
   late AppDatabase _db;
 
@@ -184,7 +212,17 @@ class _ReminderViewState extends State<ReminderView> {
                 ],
               ),
             ),
-
+            Row(
+              children: _hasTag
+                  ? [
+                      Chip(
+                        label: const Text('Aaron Burr'),
+                        shape: StadiumBorder(),
+                      ),
+                      Icon(Icons.add),
+                    ]
+                  : [GestureDetector(onTap: () {}, child: Text("+ Add a tag"))],
+            ),
             Expanded(
               child: TextFormField(
                 controller: _noteContentController,
@@ -202,3 +240,17 @@ class _ReminderViewState extends State<ReminderView> {
     );
   }
 }
+
+// class _TagChips extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return GestureDetector();
+//   }
+// }
+
+// class _TagModifyAlert extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return AlertDialog();
+//   }
+// }
