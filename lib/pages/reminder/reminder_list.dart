@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:lets_note/models/app_db.dart';
 
 // Route
-import 'package:lets_note/pages/note/note_view.dart';
+import 'package:lets_note/pages/reminder/reminder_view.dart';
 
 class ReminderList extends StatefulWidget {
   const ReminderList({super.key});
@@ -92,8 +92,6 @@ class _ReminderCard extends StatefulWidget {
 }
 
 class _ReminderCardState extends State<_ReminderCard> {
-  bool _foo = false;
-
   @override
   void initState() {
     super.initState();
@@ -130,14 +128,17 @@ class _ReminderCardState extends State<_ReminderCard> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => NoteView(
+                    builder: (context) => ReminderView(
                       rowObject: widget._rowObject.toCompanion(true),
+                      isNew: false,
                     ),
                   ),
                 );
               },
               child: Text(
-                widget._rowObject.title.toString(),
+                widget._rowObject.title! == ""
+                    ? "(No title)"
+                    : widget._rowObject.title!,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20.0,
@@ -159,7 +160,7 @@ class _ReminderCardState extends State<_ReminderCard> {
                     TextButton(
                       onPressed: () {
                         _db.deleteNote(widget._rowObject.id.toInt());
-                        Navigator.pop(context);
+                        // Navigator.pop(context);
                       },
                       child: const Text('OK'),
                     ),

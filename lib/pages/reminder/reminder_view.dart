@@ -5,22 +5,29 @@ import 'package:provider/provider.dart';
 
 import 'package:omni_datetime_picker/omni_datetime_picker.dart';
 
-class NoteView extends StatefulWidget {
+class ReminderView extends StatefulWidget {
   final NoteCompanion _rowObject;
+  final bool isNew;
 
-  const NoteView({super.key, required this._rowObject});
+  const ReminderView({
+    super.key,
+    required this._rowObject,
+    required this.isNew,
+  });
 
   @override
-  State<NoteView> createState() => _NoteViewState();
+  State<ReminderView> createState() => _ReminderViewState();
 }
 
-class _NoteViewState extends State<NoteView> {
+class _ReminderViewState extends State<ReminderView> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _noteTitleController = TextEditingController();
   final TextEditingController _noteContentController = TextEditingController();
   late DateTime? _noteDeadlineDate;
   late bool? _reminderComplete;
+  bool _toDelete = false;
+
   late AppDatabase _db;
 
   @override
@@ -48,10 +55,12 @@ class _NoteViewState extends State<NoteView> {
 
   @override
   void dispose() {
-    if (!(_noteTitleController.text == "" ||
-        _noteContentController.text == "" ||
-        _noteDeadlineDate == null)) {
-    } else {
+    if (_toDelete) {
+      _db.deleteNote(widget._rowObject.id.value);
+    } else if (!(widget.isNew &&
+            _noteTitleController.text.toString() == "" &&
+            _noteContentController.text.toString() == "") &&
+        _noteDeadlineDate == null) {
       _db.insertOrUpdateNote(
         widget._rowObject.copyWith(
           title: Value(_noteTitleController.text.toString()),
@@ -87,13 +96,46 @@ class _NoteViewState extends State<NoteView> {
     return Scaffold(
       key: _formKey,
       appBar: AppBar(
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.settings),
-        //     tooltip: 'Go to the next page',
-        //     onPressed: () {},
-        //   ),
-        // ],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Go to the next page',
+            onPressed: () {},
+          ),
+          if (!widget.isNew)
+            IconButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(
+                      "Delete ${widget._rowObject.title.value == "" ? "Reminder" : widget._rowObject.title.value}",
+                    ),
+                    content: const Text("Are you sure you want to delete it?"),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          _toDelete = true;
+                          Navigator.pop(context);
+                        },
+                        child: const Text('OK'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              icon: Icon(Icons.delete),
+            ),
+          IconButton(
+            icon: const Icon(Icons.notifications_off_outlined),
+            tooltip: 'Disable notification',
+            onPressed: () {},
+          ),
+        ],
         centerTitle: true,
       ),
       bottomNavigationBar: BottomAppBar(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lets_note/models/app_db.dart';
-import 'package:lets_note/pages/note/note_view.dart' show NoteView;
+import 'package:lets_note/pages/reminder/reminder_view.dart' show ReminderView;
 import 'package:lets_note/route.dart';
 import 'package:provider/provider.dart';
 
@@ -63,7 +63,8 @@ class Home extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => NoteView(rowObject: NoteCompanion()),
+              builder: (context) =>
+                  ReminderView(rowObject: NoteCompanion(), isNew: true),
             ),
           ),
         },
