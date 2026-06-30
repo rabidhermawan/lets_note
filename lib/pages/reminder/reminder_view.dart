@@ -27,19 +27,18 @@ class _ReminderViewState extends State<ReminderView> {
   final TextEditingController _noteContentController = TextEditingController();
   late DateTime? _noteDeadlineDate;
   late bool? _reminderComplete;
+
+  late List<Map<String, dynamic>> _tagList = [];
+  late final AppDatabase _db;
+
   bool _toDelete = false;
-  bool _hasTag = true;
 
-  late AppDatabase _db;
-
-  @override
-  void didChangeDependencies() {
-    _db = context.read<AppDatabase>();
-    super.didChangeDependencies();
-  }
+  Future<void> _loadTag() async =>
+      await _db.getAllTagOfNoteAndAllWithCheck(widget._rowObject.id.value);
 
   @override
   void initState() {
+    _db = context.read<AppDatabase>();
     _noteTitleController.text = (widget._rowObject.title == Value.absent()
         ? ""
         : widget._rowObject.title.value)!;
@@ -52,6 +51,8 @@ class _ReminderViewState extends State<ReminderView> {
     _reminderComplete = (widget._rowObject.reminderComplete == Value.absent()
         ? false
         : widget._rowObject.reminderComplete.value);
+
+    _loadTag();
     super.initState();
   }
 
@@ -102,32 +103,24 @@ class _ReminderViewState extends State<ReminderView> {
           IconButton(
             icon: const Icon(Icons.label),
             tooltip: 'Add tag',
-            onPressed: () {
-              showDialog<String>(
-                context: context,
-                builder: (BuildContext context) => AlertDialog(
-                  title: const Text('Tag'),
-                  content: Column(children: [Text("Squeaky")]),
-                  actions: <Widget>[
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, 'Cancel'),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, 'OK'),
-                      child: const Text('OK'),
-                    ),
-                  ],
-                ),
-              );
+            onPressed: () async {
+              List<Map<String, dynamic>>? newTagList =
+                  await showDialog<List<Map<String, dynamic>>>(
+                    context: context,
+                    builder: (BuildContext dialogContext) =>
+                        _TagChooseDialog(tagList: _tagList),
+                  );
+              if (newTagList != _tagList) {
+                _tagList = newTagList!.isEmpty ? [] : newTagList;
+              }
             },
           ),
           if (!widget.isNew)
             IconButton(
-              onPressed: () {
-                showDialog(
+              onPressed: () async {
+                final bool isDeleted = await showDialog(
                   context: context,
-                  builder: (context) => AlertDialog(
+                  builder: (dialogContext) => AlertDialog(
                     title: Text(
                       "Delete ${widget._rowObject.title.value == "" ? "Reminder" : widget._rowObject.title.value}",
                     ),
@@ -136,17 +129,21 @@ class _ReminderViewState extends State<ReminderView> {
                       TextButton(
                         onPressed: () {
                           _toDelete = true;
-                          Navigator.pop(context);
+                          Navigator.pop(context, true);
                         },
                         child: const Text('OK'),
                       ),
                       TextButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () => Navigator.pop(context, false),
                         child: const Text('Cancel'),
                       ),
                     ],
                   ),
                 );
+
+                if (isDeleted && context.mounted) {
+                  Navigator.pop(context);
+                }
               },
               icon: Icon(Icons.delete),
             ),
@@ -208,7 +205,7 @@ class _ReminderViewState extends State<ReminderView> {
               ],
             ),
             Row(
-              children: _hasTag
+              children: _tagList.isEmpty
                   ? [
                       Chip(
                         label: const Text('Aaron Burr'),
@@ -235,38 +232,46 @@ class _ReminderViewState extends State<ReminderView> {
   }
 }
 
-// class _TagChips extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return GestureDetector();
-//   }
-// }
+class _TagChooseDialog extends StatefulWidget {
+  final List<Map<String, dynamic>> tagList;
 
-// class _TagModifyAlert extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return AlertDialog();
-//   }
-// }
+  const _TagChooseDialog({required this.tagList});
 
-// class TagChooseDialog extends StatefulWidget {
-//   const TagChooseDialog({super.key});
+  @override
+  State<_TagChooseDialog> createState() => _TagChooseDialogState();
+}
 
-//   @override
-//   State<TagChooseDialog> createState() => _TagChooseDialogState();
-// }
-
-// class _TagChooseDialogState extends State<TagChooseDialog> {
-//   late final AppDatabase _db;
-
-//   @override
-//   void didChangeDependencies() {
-//     _db = context.read<AppDatabase>();
-//     super.didChangeDependencies();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return AlertDialog();
-//   }
-// }
+class _TagChooseDialogState extends State<_TagChooseDialog> {
+  @override
+  Widget build(BuildContext context) {
+    List<Map<String, dynamic>> newTagList = widget.tagList;
+    return AlertDialog(
+      title: Text("Tags"),
+      content: newTagList.isEmpty
+          ? Text("No tags are present")
+          : ListView.builder(
+              padding: const EdgeInsets.all(8),
+              itemCount: newTagList.length,
+              itemBuilder: (BuildContext context, int index) {
+                return Container(
+                  height: 50,
+                  // color: Colors.amber[colorCodes[index]],
+                  child: Center(child: Text('${newTagList[index]["NAME"]}')),
+                );
+              },
+            ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context, newTagList);
+          },
+          child: const Text('OK'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+      ],
+    );
+  }
+}
