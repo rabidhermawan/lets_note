@@ -59,7 +59,7 @@ class _ReminderListState extends State<ReminderList> {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.label),
+              icon: const Icon(Icons.label_outline),
               tooltip: 'Add tag',
               onPressed: () {
                 Navigator.push(
@@ -84,7 +84,7 @@ class _ReminderListState extends State<ReminderList> {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
                   return Center(child: Text(snapshot.error.toString()));
-                } else if (notes != null) {
+                } else if (notes != null && notes.isNotEmpty) {
                   return ListView.builder(
                     itemCount: notes.length,
                     itemBuilder: (context, index) {
@@ -182,7 +182,7 @@ class ReminderCardState extends State<ReminderCard> {
                     TextButton(
                       onPressed: () {
                         _db.deleteNote(widget._rowObject.id.toInt());
-                        // Navigator.pop(context);
+                        Navigator.pop(context);
                       },
                       child: const Text('OK'),
                     ),

@@ -60,7 +60,8 @@ class _ReminderTagState extends State<ReminderTag> {
           ),
         ],
       ),
-      body: Center(
+      body: Padding(
+        padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
         child: StreamBuilder<List<TagData>>(
           stream: _db.watchAllTag(),
           builder: (context, snapshot) {
@@ -69,8 +70,8 @@ class _ReminderTagState extends State<ReminderTag> {
               return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
               return Center(child: Text(snapshot.error.toString()));
-            } else if (tags != null) {
-              return ListView.builder(
+            } else if (tags != null && tags.isNotEmpty) {
+              return ListView.separated(
                 itemCount: tags.length,
                 itemBuilder: (context, index) {
                   final tag = tags[index];
@@ -79,7 +80,8 @@ class _ReminderTagState extends State<ReminderTag> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ReminderTagNote(tagId: tag.id),
+                          builder: (context) =>
+                              ReminderTagNote(tagId: tag.id, tagName: tag.name),
                         ),
                       );
                     },
@@ -89,8 +91,16 @@ class _ReminderTagState extends State<ReminderTag> {
                       child: Center(
                         child: Row(
                           children: [
-                            Icon(Icons.label),
-                            Text(tag.name),
+                            Padding(
+                              padding: EdgeInsetsGeometry.fromLTRB(
+                                0,
+                                0,
+                                8.0,
+                                0,
+                              ),
+                              child: Icon(Icons.label_outline),
+                            ),
+                            Expanded(child: Text(tag.name)),
                             IconButton(
                               onPressed: () {
                                 showDialog(
@@ -126,6 +136,8 @@ class _ReminderTagState extends State<ReminderTag> {
                     ),
                   );
                 },
+                separatorBuilder: (BuildContext context, int index) =>
+                    const Divider(),
               );
             } else {
               return Center(child: Text("No tags"));
@@ -139,7 +151,12 @@ class _ReminderTagState extends State<ReminderTag> {
 
 class ReminderTagNote extends StatefulWidget {
   final int tagId;
-  const ReminderTagNote({super.key, required this.tagId});
+  final String tagName;
+  const ReminderTagNote({
+    super.key,
+    required this.tagId,
+    required this.tagName,
+  });
 
   @override
   State<ReminderTagNote> createState() => _ReminderTagNoteState();
@@ -151,8 +168,9 @@ class _ReminderTagNoteState extends State<ReminderTagNote> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
-      body: Center(
+      appBar: AppBar(title: Text(widget.tagName)),
+      body: Padding(
+        padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
         child: StreamBuilder<List<NoteData>>(
           stream: _db.watchNotesByTag(tagId: widget.tagId),
           builder: (context, snapshot) {
@@ -161,7 +179,7 @@ class _ReminderTagNoteState extends State<ReminderTagNote> {
               return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
               return Center(child: Text(snapshot.error.toString()));
-            } else if (notes != null) {
+            } else if (notes != null && notes.isNotEmpty) {
               return ListView.builder(
                 itemCount: notes.length,
                 itemBuilder: (context, index) {

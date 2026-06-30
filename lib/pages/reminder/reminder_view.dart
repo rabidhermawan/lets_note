@@ -116,7 +116,7 @@ class _ReminderViewState extends State<ReminderView> {
       appBar: AppBar(
         actions: [
           IconButton(
-            icon: const Icon(Icons.label),
+            icon: const Icon(Icons.label_outline),
             tooltip: 'Add tag',
             onPressed: () async {
               List<Map<String, dynamic>>? newTagList =
@@ -132,6 +132,16 @@ class _ReminderViewState extends State<ReminderView> {
                   _allTagWithCheck = newTagList.isEmpty ? [] : newTagList;
                 });
               }
+            },
+          ),
+
+          IconButton(
+            icon: _noteDeadlineDate == null
+                ? Icon(Icons.notifications_off_outlined)
+                : Icon(Icons.notifications_outlined),
+            tooltip: 'Toggle the deadline',
+            onPressed: () {
+              _selectDate();
             },
           ),
           if (!widget.isNew)
@@ -166,15 +176,6 @@ class _ReminderViewState extends State<ReminderView> {
               },
               icon: Icon(Icons.delete),
             ),
-          IconButton(
-            icon: _noteDeadlineDate == null
-                ? Icon(Icons.notifications_off_outlined)
-                : Icon(Icons.notifications_outlined),
-            tooltip: 'Toggle the deadline',
-            onPressed: () {
-              _selectDate();
-            },
-          ),
         ],
         centerTitle: true,
       ),
@@ -197,7 +198,9 @@ class _ReminderViewState extends State<ReminderView> {
           : null,
       body: Padding(
         padding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 28.0),
-        child: Column(
+        child: ListView(
+          shrinkWrap: true,
+          // physics: NeverScrollableScrollPhysics(),
           children: [
             // Title
             TextFormField(
@@ -210,23 +213,28 @@ class _ReminderViewState extends State<ReminderView> {
               keyboardType: TextInputType.multiline,
               maxLines: null,
             ),
-            Row(
-              children: [
-                Padding(
-                  padding: EdgeInsetsGeometry.fromLTRB(0, 0, 8.0, 0),
-                  child: Icon(Icons.notifications),
-                ),
-                Text(
-                  _noteDeadlineDate == null
-                      ? "No deadline"
-                      : "${_noteDeadlineDate!.day}/${_noteDeadlineDate!.month}/${_noteDeadlineDate!.year} ${_noteDeadlineDate!.hour < 10 ? _noteDeadlineDate!.hour.toString().padLeft(2, '0') : _noteDeadlineDate!.hour}:${_noteDeadlineDate!.minute < 10 ? _noteDeadlineDate!.minute.toString().padLeft(2, '0') : _noteDeadlineDate!.minute}",
-                ),
-              ],
+            Padding(
+              padding: EdgeInsetsGeometry.fromLTRB(0, 0, 0, 8.0),
+              child: Row(
+                children: [
+                  Padding(
+                    padding: EdgeInsetsGeometry.fromLTRB(0, 0, 8.0, 0),
+                    child: _noteDeadlineDate == null
+                        ? Icon(Icons.notifications_off_outlined)
+                        : Icon(Icons.notifications_outlined),
+                  ),
+                  Text(
+                    _noteDeadlineDate == null
+                        ? "No deadline"
+                        : "${_noteDeadlineDate!.day}/${_noteDeadlineDate!.month}/${_noteDeadlineDate!.year} ${_noteDeadlineDate!.hour < 10 ? _noteDeadlineDate!.hour.toString().padLeft(2, '0') : _noteDeadlineDate!.hour}:${_noteDeadlineDate!.minute < 10 ? _noteDeadlineDate!.minute.toString().padLeft(2, '0') : _noteDeadlineDate!.minute}",
+                  ),
+                ],
+              ),
             ),
             Wrap(
               alignment: WrapAlignment.start,
-              spacing: 8.0,
-              runSpacing: 4.0,
+              spacing: 4.0,
+              // runSpacing: 4.0,
               children: _allTagWithCheck.any((tag) => tag["isChecked"] == true)
                   ? _allTagWithCheck
                         .where((tag) => tag["isChecked"] == true)
@@ -239,16 +247,15 @@ class _ReminderViewState extends State<ReminderView> {
                         .toList()
                   : [const Text("No Tag")],
             ),
-            Expanded(
-              child: TextFormField(
-                controller: _noteContentController,
-                decoration: InputDecoration(
-                  hint: Text("Content"),
-                  border: InputBorder.none,
-                ),
-                keyboardType: TextInputType.multiline,
-                maxLines: null,
+
+            TextFormField(
+              controller: _noteContentController,
+              decoration: InputDecoration(
+                hint: Text("Content"),
+                border: InputBorder.none,
               ),
+              keyboardType: TextInputType.multiline,
+              maxLines: null,
             ),
           ],
         ),
@@ -271,14 +278,14 @@ class _TagChooseDialogState extends State<_TagChooseDialog> {
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> newTagList = widget.tagList;
     return AlertDialog(
-      title: Text("Tags"),
+      title: Text("Select Tags"),
       content: newTagList.isEmpty
           ? Text("No tags are present")
           : SizedBox(
               width: double.maxFinite,
               height: 300.0,
-              child: ListView.builder(
-                padding: const EdgeInsets.all(8),
+              child: ListView.separated(
+                // padding: const EdgeInsets.all(4),
                 itemCount: newTagList.length,
                 itemBuilder: (BuildContext context, int index) {
                   return Container(
@@ -287,7 +294,7 @@ class _TagChooseDialogState extends State<_TagChooseDialog> {
                     child: Center(
                       child: Row(
                         children: [
-                          Text('${newTagList[index]["name"]}'),
+                          Expanded(child: Text('${newTagList[index]["name"]}')),
                           Checkbox(
                             value: newTagList[index]["isChecked"],
                             onChanged: (value) {
@@ -301,6 +308,8 @@ class _TagChooseDialogState extends State<_TagChooseDialog> {
                     ),
                   );
                 },
+                separatorBuilder: (BuildContext context, int index) =>
+                    const Divider(),
               ),
             ),
       actions: [

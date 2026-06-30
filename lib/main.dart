@@ -45,7 +45,7 @@ class Home extends StatelessWidget {
             ),
           ),
         },
-        child: Icon(Icons.check_circle_outline_rounded),
+        child: Icon(Icons.add),
       ),
     );
   }
