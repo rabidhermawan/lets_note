@@ -33,10 +33,11 @@ class AppDatabase extends _$AppDatabase {
     NoteCompanion noteEntry,
     List<NoteTagCompanion> tagEntry,
   ) async {
-    await managers.note.create((note) => noteEntry, mode: InsertMode.replace);
-    await managers.noteTag
-        .filter((f) => f.noteId.id(noteEntry.id.value))
-        .delete();
+    int noteTag = await managers.note.create(
+      (note) => noteEntry,
+      mode: InsertMode.replace,
+    );
+    await managers.noteTag.filter((f) => f.noteId.id(noteTag)).delete();
     await managers.noteTag.bulkCreate(
       (noteTag) => tagEntry,
       mode: InsertMode.replace,

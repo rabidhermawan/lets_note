@@ -158,6 +158,7 @@ class ReminderCardState extends State<ReminderCard> {
                 );
               },
               child: Text(
+                overflow: TextOverflow.ellipsis,
                 widget._rowObject.title! == ""
                     ? "(No title)"
                     : widget._rowObject.title!,

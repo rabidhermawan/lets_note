@@ -100,7 +100,12 @@ class _ReminderTagState extends State<ReminderTag> {
                               ),
                               child: Icon(Icons.label_outline),
                             ),
-                            Expanded(child: Text(tag.name)),
+                            Expanded(
+                              child: Text(
+                                tag.name,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                             IconButton(
                               onPressed: () {
                                 showDialog(
