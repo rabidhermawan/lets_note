@@ -654,7 +654,7 @@ class TagCompanion extends UpdateCompanion<TagData> {
   }
 }
 
-class $NoteTagTable extends NoteTag with TableInfo<$NoteTagTable, NoteTag> {
+class $NoteTagTable extends NoteTag with TableInfo<$NoteTagTable, NoteTagData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -692,7 +692,7 @@ class $NoteTagTable extends NoteTag with TableInfo<$NoteTagTable, NoteTag> {
   static const String $name = 'note_tag';
   @override
   VerificationContext validateIntegrity(
-    Insertable<NoteTag> instance, {
+    Insertable<NoteTagData> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -719,9 +719,9 @@ class $NoteTagTable extends NoteTag with TableInfo<$NoteTagTable, NoteTag> {
   @override
   Set<GeneratedColumn> get $primaryKey => {noteId, tagId};
   @override
-  NoteTag map(Map<String, dynamic> data, {String? tablePrefix}) {
+  NoteTagData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return NoteTag(
+    return NoteTagData(
       noteId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}note_id'],
@@ -739,10 +739,10 @@ class $NoteTagTable extends NoteTag with TableInfo<$NoteTagTable, NoteTag> {
   }
 }
 
-class NoteTag extends DataClass implements Insertable<NoteTag> {
+class NoteTagData extends DataClass implements Insertable<NoteTagData> {
   final int noteId;
   final int tagId;
-  const NoteTag({required this.noteId, required this.tagId});
+  const NoteTagData({required this.noteId, required this.tagId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -755,12 +755,12 @@ class NoteTag extends DataClass implements Insertable<NoteTag> {
     return NoteTagCompanion(noteId: Value(noteId), tagId: Value(tagId));
   }
 
-  factory NoteTag.fromJson(
+  factory NoteTagData.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return NoteTag(
+    return NoteTagData(
       noteId: serializer.fromJson<int>(json['noteId']),
       tagId: serializer.fromJson<int>(json['tagId']),
     );
@@ -774,10 +774,10 @@ class NoteTag extends DataClass implements Insertable<NoteTag> {
     };
   }
 
-  NoteTag copyWith({int? noteId, int? tagId}) =>
-      NoteTag(noteId: noteId ?? this.noteId, tagId: tagId ?? this.tagId);
-  NoteTag copyWithCompanion(NoteTagCompanion data) {
-    return NoteTag(
+  NoteTagData copyWith({int? noteId, int? tagId}) =>
+      NoteTagData(noteId: noteId ?? this.noteId, tagId: tagId ?? this.tagId);
+  NoteTagData copyWithCompanion(NoteTagCompanion data) {
+    return NoteTagData(
       noteId: data.noteId.present ? data.noteId.value : this.noteId,
       tagId: data.tagId.present ? data.tagId.value : this.tagId,
     );
@@ -785,7 +785,7 @@ class NoteTag extends DataClass implements Insertable<NoteTag> {
 
   @override
   String toString() {
-    return (StringBuffer('NoteTag(')
+    return (StringBuffer('NoteTagData(')
           ..write('noteId: $noteId, ')
           ..write('tagId: $tagId')
           ..write(')'))
@@ -797,12 +797,12 @@ class NoteTag extends DataClass implements Insertable<NoteTag> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is NoteTag &&
+      (other is NoteTagData &&
           other.noteId == this.noteId &&
           other.tagId == this.tagId);
 }
 
-class NoteTagCompanion extends UpdateCompanion<NoteTag> {
+class NoteTagCompanion extends UpdateCompanion<NoteTagData> {
   final Value<int> noteId;
   final Value<int> tagId;
   final Value<int> rowid;
@@ -817,7 +817,7 @@ class NoteTagCompanion extends UpdateCompanion<NoteTag> {
     this.rowid = const Value.absent(),
   }) : noteId = Value(noteId),
        tagId = Value(tagId);
-  static Insertable<NoteTag> custom({
+  static Insertable<NoteTagData> custom({
     Expression<int>? noteId,
     Expression<int>? tagId,
     Expression<int>? rowid,
@@ -905,9 +905,8 @@ final class $$NoteTableReferences
     extends BaseReferences<_$AppDatabase, $NoteTable, NoteData> {
   $$NoteTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static MultiTypedResultKey<$NoteTagTable, List<NoteTag>> _noteTagRefsTable(
-    _$AppDatabase db,
-  ) => MultiTypedResultKey.fromTable(
+  static MultiTypedResultKey<$NoteTagTable, List<NoteTagData>>
+  _noteTagRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.noteTag,
     aliasName: 'note__id__note_tag__note_id',
   );
@@ -1176,7 +1175,11 @@ class $$NoteTableTableManager
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (noteTagRefs)
-                    await $_getPrefetchedData<NoteData, $NoteTable, NoteTag>(
+                    await $_getPrefetchedData<
+                      NoteData,
+                      $NoteTable,
+                      NoteTagData
+                    >(
                       currentTable: table,
                       referencedTable: $$NoteTableReferences._noteTagRefsTable(
                         db,
@@ -1218,9 +1221,8 @@ final class $$TagTableReferences
     extends BaseReferences<_$AppDatabase, $TagTable, TagData> {
   $$TagTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static MultiTypedResultKey<$NoteTagTable, List<NoteTag>> _noteTagRefsTable(
-    _$AppDatabase db,
-  ) => MultiTypedResultKey.fromTable(
+  static MultiTypedResultKey<$NoteTagTable, List<NoteTagData>>
+  _noteTagRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.noteTag,
     aliasName: 'tag__id__note_tag__tag_id',
   );
@@ -1388,7 +1390,7 @@ class $$TagTableTableManager
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (noteTagRefs)
-                    await $_getPrefetchedData<TagData, $TagTable, NoteTag>(
+                    await $_getPrefetchedData<TagData, $TagTable, NoteTagData>(
                       currentTable: table,
                       referencedTable: $$TagTableReferences._noteTagRefsTable(
                         db,
@@ -1435,7 +1437,7 @@ typedef $$NoteTagTableUpdateCompanionBuilder =
     });
 
 final class $$NoteTagTableReferences
-    extends BaseReferences<_$AppDatabase, $NoteTagTable, NoteTag> {
+    extends BaseReferences<_$AppDatabase, $NoteTagTable, NoteTagData> {
   $$NoteTagTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static $NoteTable _noteIdTable(_$AppDatabase db) =>
@@ -1646,14 +1648,14 @@ class $$NoteTagTableTableManager
         RootTableManager<
           _$AppDatabase,
           $NoteTagTable,
-          NoteTag,
+          NoteTagData,
           $$NoteTagTableFilterComposer,
           $$NoteTagTableOrderingComposer,
           $$NoteTagTableAnnotationComposer,
           $$NoteTagTableCreateCompanionBuilder,
           $$NoteTagTableUpdateCompanionBuilder,
-          (NoteTag, $$NoteTagTableReferences),
-          NoteTag,
+          (NoteTagData, $$NoteTagTableReferences),
+          NoteTagData,
           PrefetchHooks Function({bool noteId, bool tagId})
         > {
   $$NoteTagTableTableManager(_$AppDatabase db, $NoteTagTable table)
@@ -1754,14 +1756,14 @@ typedef $$NoteTagTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
       $NoteTagTable,
-      NoteTag,
+      NoteTagData,
       $$NoteTagTableFilterComposer,
       $$NoteTagTableOrderingComposer,
       $$NoteTagTableAnnotationComposer,
       $$NoteTagTableCreateCompanionBuilder,
       $$NoteTagTableUpdateCompanionBuilder,
-      (NoteTag, $$NoteTagTableReferences),
-      NoteTag,
+      (NoteTagData, $$NoteTagTableReferences),
+      NoteTagData,
       PrefetchHooks Function({bool noteId, bool tagId})
     >;
 
