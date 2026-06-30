@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
+import 'package:lets_note/pages/reminder/reminder_tag.dart';
 import 'package:provider/provider.dart';
 
 // Database
@@ -30,7 +31,7 @@ class _ReminderListState extends State<ReminderList> {
       children: [
         Row(
           children: [
-            const SizedBox(width: 80),
+            const SizedBox(width: 60),
             Expanded(
               child: Center(
                 child: ToggleButtons(
@@ -60,7 +61,12 @@ class _ReminderListState extends State<ReminderList> {
             IconButton(
               icon: const Icon(Icons.label),
               tooltip: 'Add tag',
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ReminderTag()),
+                );
+              },
             ),
           ],
         ),

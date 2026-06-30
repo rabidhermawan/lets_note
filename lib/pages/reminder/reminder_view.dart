@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
-import 'package:lets_note/models/app_db.dart' show AppDatabase, NoteCompanion;
-import 'package:lets_note/models/tables/tag.dart';
+import 'package:lets_note/models/app_db.dart'
+    show AppDatabase, NoteCompanion, NoteTagCompanion;
 import 'package:provider/provider.dart';
 
 import 'package:omni_datetime_picker/omni_datetime_picker.dart';
@@ -28,13 +28,19 @@ class _ReminderViewState extends State<ReminderView> {
   late DateTime? _noteDeadlineDate;
   late bool? _reminderComplete;
 
-  late List<Map<String, dynamic>> _tagList = [];
+  late List<Map<String, dynamic>> _allTagWithCheck = [];
   late final AppDatabase _db;
 
   bool _toDelete = false;
 
-  Future<void> _loadTag() async =>
-      await _db.getAllTagOfNoteAndAllWithCheck(widget._rowObject.id.value);
+  Future<void> _loadTag() async {
+    final fetchedTags = await _db.getAllTagWithCheck(
+      widget._rowObject.id.value,
+    );
+    setState(() {
+      _allTagWithCheck = fetchedTags;
+    });
+  }
 
   @override
   void initState() {
@@ -64,13 +70,22 @@ class _ReminderViewState extends State<ReminderView> {
         _noteTitleController.text.toString() == "" &&
         _noteContentController.text.toString() == "" &&
         _noteDeadlineDate == null)) {
-      _db.insertOrUpdateNote(
+      _db.insertOrUpdateNoteTag(
         widget._rowObject.copyWith(
           title: Value(_noteTitleController.text.toString()),
           content: Value(_noteContentController.text.toString()),
           dateReminder: Value(_noteDeadlineDate),
           reminderComplete: Value(_reminderComplete!),
         ),
+        _allTagWithCheck
+            .where((tag) => tag["isChecked"] == true)
+            .map(
+              (tag) => NoteTagCompanion(
+                noteId: widget._rowObject.id,
+                tagId: Value(tag["id"]),
+              ),
+            )
+            .toList(),
       );
     }
 
@@ -108,10 +123,14 @@ class _ReminderViewState extends State<ReminderView> {
                   await showDialog<List<Map<String, dynamic>>>(
                     context: context,
                     builder: (BuildContext dialogContext) =>
-                        _TagChooseDialog(tagList: _tagList),
+                        _TagChooseDialog(tagList: _allTagWithCheck),
                   );
-              if (newTagList != _tagList) {
-                _tagList = newTagList!.isEmpty ? [] : newTagList;
+
+              // Check ONLY for null.
+              if (newTagList != null) {
+                setState(() {
+                  _allTagWithCheck = newTagList.isEmpty ? [] : newTagList;
+                });
               }
             },
           ),
@@ -128,7 +147,6 @@ class _ReminderViewState extends State<ReminderView> {
                     actions: [
                       TextButton(
                         onPressed: () {
-                          _toDelete = true;
                           Navigator.pop(context, true);
                         },
                         child: const Text('OK'),
@@ -142,6 +160,7 @@ class _ReminderViewState extends State<ReminderView> {
                 );
 
                 if (isDeleted && context.mounted) {
+                  _toDelete = true;
                   Navigator.pop(context);
                 }
               },
@@ -204,15 +223,21 @@ class _ReminderViewState extends State<ReminderView> {
                 ),
               ],
             ),
-            Row(
-              children: _tagList.isEmpty
-                  ? [
-                      Chip(
-                        label: const Text('Aaron Burr'),
-                        shape: StadiumBorder(),
-                      ),
-                    ]
-                  : [GestureDetector(onTap: () {}, child: Text("+ Add a tag"))],
+            Wrap(
+              alignment: WrapAlignment.start,
+              spacing: 8.0,
+              runSpacing: 4.0,
+              children: _allTagWithCheck.any((tag) => tag["isChecked"] == true)
+                  ? _allTagWithCheck
+                        .where((tag) => tag["isChecked"] == true)
+                        .map(
+                          (tag) => Chip(
+                            label: Text(tag["name"]),
+                            shape: const StadiumBorder(),
+                          ),
+                        )
+                        .toList()
+                  : [const Text("No Tag")],
             ),
             Expanded(
               child: TextFormField(
@@ -249,20 +274,41 @@ class _TagChooseDialogState extends State<_TagChooseDialog> {
       title: Text("Tags"),
       content: newTagList.isEmpty
           ? Text("No tags are present")
-          : ListView.builder(
-              padding: const EdgeInsets.all(8),
-              itemCount: newTagList.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Container(
-                  height: 50,
-                  // color: Colors.amber[colorCodes[index]],
-                  child: Center(child: Text('${newTagList[index]["NAME"]}')),
-                );
-              },
+          : SizedBox(
+              width: double.maxFinite,
+              height: 300.0,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(8),
+                itemCount: newTagList.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return Container(
+                    height: 50,
+                    // color: Colors.amber[colorCodes[index]],
+                    child: Center(
+                      child: Row(
+                        children: [
+                          Text('${newTagList[index]["name"]}'),
+                          Checkbox(
+                            value: newTagList[index]["isChecked"],
+                            onChanged: (value) {
+                              setState(() {
+                                newTagList[index]["isChecked"] = value!;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
       actions: [
         TextButton(
           onPressed: () {
+            for (var x in newTagList) {
+              print("Name: ${x["name"]}, isChecked: ${x["isChecked"]}");
+            }
             Navigator.pop(context, newTagList);
           },
           child: const Text('OK'),

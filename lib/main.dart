@@ -31,30 +31,7 @@ class Home extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text("Let's Note!"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.navigate_next),
-            tooltip: 'Go to the next page',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (BuildContext context) {
-                    return Scaffold(
-                      appBar: AppBar(title: const Text('Next page')),
-                      body: const Center(
-                        child: Text(
-                          'This is the next page',
-                          style: TextStyle(fontSize: 24),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              );
-            },
-          ),
-        ],
+        actions: [],
         centerTitle: true,
       ),
       body: ReminderList(),

@@ -29,6 +29,20 @@ class AppDatabase extends _$AppDatabase {
     return into(note).insertOnConflictUpdate(entry);
   }
 
+  Future<void> insertOrUpdateNoteTag(
+    NoteCompanion noteEntry,
+    List<NoteTagCompanion> tagEntry,
+  ) async {
+    await managers.note.create((note) => noteEntry, mode: InsertMode.replace);
+    await managers.noteTag
+        .filter((f) => f.noteId.id(noteEntry.id.value))
+        .delete();
+    await managers.noteTag.bulkCreate(
+      (noteTag) => tagEntry,
+      mode: InsertMode.replace,
+    );
+  }
+
   Future<int> insertOrUpdateTag(TagCompanion entry) {
     return into(tag).insertOnConflictUpdate(entry);
   }
@@ -55,25 +69,29 @@ class AppDatabase extends _$AppDatabase {
       await managers.note.filter((t) => t.id.equals(id)).getSingle();
 
   Future<List<TagData>> getAllTag() async => await managers.tag.get();
-  Future<List<Map<String, dynamic>>> getAllTagOfNoteAndAllWithCheck(
-    int id,
-  ) async {
-    final List<Map<String, dynamic>> tagList = [];
-    final tagOfNote = await managers.tag
-        .withReferences((prefetch) => prefetch(noteTagRefs: true))
-        .get();
+  Stream<List<TagData>> watchAllTag() => managers.tag.watch();
 
-    for (final (tag, refs) in tagOfNote) {
-      //Check if null, if yes then return empty list
-      final tags = refs.noteTagRefs.prefetchedData ?? [];
-      tagList.add({
-        "id": tag.id,
-        "name": tag.name,
-        "isChecked": tags.any((element) => element.noteId == id),
-      });
-    }
+  // Assisted with AI
+  Future<List<Map<String, dynamic>>> getAllTagWithCheck(int id) async {
+    final query = select(tag).join([
+      leftOuterJoin(
+        noteTag,
+        noteTag.tagId.equalsExp(tag.id) & noteTag.noteId.equals(id),
+      ),
+    ]);
 
-    return tagList;
+    final results = await query.get();
+
+    return results.map((row) {
+      final tagRows = row.readTable(tag);
+      final noteTagRows = row.readTableOrNull(noteTag);
+
+      return {
+        "id": tagRows.id,
+        "name": tagRows.name,
+        "isChecked": noteTagRows != null,
+      };
+    }).toList();
   }
 
   // Update
@@ -82,6 +100,15 @@ class AppDatabase extends _$AppDatabase {
   // }
 
   // Delete
-  Future deleteNote(int id) async =>
-      await managers.note.filter((t) => t.id.equals(id)).delete();
+  Future<void> deleteNote(int id) async {
+    // Delete tags and relation in the junction table
+    await managers.noteTag.filter((t) => t.noteId.id(id)).delete();
+    await managers.note.filter((t) => t.id.equals(id)).delete();
+  }
+
+  Future<void> deleteTag(int id) async {
+    // Delete tags and relation in the junction table
+    await managers.noteTag.filter((t) => t.tagId.id(id)).delete();
+    await managers.tag.filter((t) => t.id.equals(id)).delete();
+  }
 }
