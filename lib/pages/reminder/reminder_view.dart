@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:lets_note/models/app_db.dart' show AppDatabase, NoteCompanion;
+import 'package:lets_note/models/tables/tag.dart';
 import 'package:provider/provider.dart';
 
 import 'package:omni_datetime_picker/omni_datetime_picker.dart';
@@ -18,33 +19,6 @@ class ReminderView extends StatefulWidget {
   @override
   State<ReminderView> createState() => _ReminderViewState();
 }
-
-// class DialogExample extends StatelessWidget {
-//   const DialogExample({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return showDialog<String(
-//         context: context,
-//         builder: (BuildContext context) => AlertDialog(
-//           title: const Text('AlertDialog Title'),
-//           content: SingleChildScrollView(child:Column(children: Text('AlertDialog description'))),
-//           actions: <Widget>[
-//             TextButton(
-//               onPressed: () => Navigator.pop(context, 'Cancel'),
-//               child: const Text('Cancel'),
-//             ),
-//             TextButton(
-//               onPressed: () => Navigator.pop(context, 'OK'),
-//               child: const Text('OK'),
-//             ),
-//           ],
-//         ),
-//       ),
-//       child: const Text('Show Dialog'),
-//     );
-//   }
-// }
 
 class _ReminderViewState extends State<ReminderView> {
   final _formKey = GlobalKey<FormState>();
@@ -86,9 +60,9 @@ class _ReminderViewState extends State<ReminderView> {
     if (_toDelete) {
       _db.deleteNote(widget._rowObject.id.value);
     } else if (!(widget.isNew &&
-            _noteTitleController.text.toString() == "" &&
-            _noteContentController.text.toString() == "") &&
-        _noteDeadlineDate == null) {
+        _noteTitleController.text.toString() == "" &&
+        _noteContentController.text.toString() == "" &&
+        _noteDeadlineDate == null)) {
       _db.insertOrUpdateNote(
         widget._rowObject.copyWith(
           title: Value(_noteTitleController.text.toString()),
@@ -126,9 +100,27 @@ class _ReminderViewState extends State<ReminderView> {
       appBar: AppBar(
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: 'Go to the next page',
-            onPressed: () {},
+            icon: const Icon(Icons.label),
+            tooltip: 'Add tag',
+            onPressed: () {
+              showDialog<String>(
+                context: context,
+                builder: (BuildContext context) => AlertDialog(
+                  title: const Text('Tag'),
+                  content: Column(children: [Text("Squeaky")]),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, 'Cancel'),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, 'OK'),
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
           if (!widget.isNew)
             IconButton(
@@ -159,26 +151,34 @@ class _ReminderViewState extends State<ReminderView> {
               icon: Icon(Icons.delete),
             ),
           IconButton(
-            icon: const Icon(Icons.notifications_off_outlined),
-            tooltip: 'Disable notification',
-            onPressed: () {},
+            icon: _noteDeadlineDate == null
+                ? Icon(Icons.notifications_off_outlined)
+                : Icon(Icons.notifications_outlined),
+            tooltip: 'Toggle the deadline',
+            onPressed: () {
+              _selectDate();
+            },
           ),
         ],
         centerTitle: true,
       ),
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.transparent,
-        elevation: 0,
-        child: FilledButton(
-          onPressed: () {
-            _reminderComplete = _reminderComplete! ? false : true;
-            Navigator.pop(context);
-          },
-          child: Text(
-            _reminderComplete == false ? "Mark as done" : "Mark as not done",
-          ),
-        ),
-      ),
+      bottomNavigationBar: !widget.isNew
+          ? BottomAppBar(
+              color: Colors.transparent,
+              elevation: 0,
+              child: FilledButton(
+                onPressed: () {
+                  _reminderComplete = _reminderComplete! ? false : true;
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  _reminderComplete == false
+                      ? "Mark as done"
+                      : "Mark as not done",
+                ),
+              ),
+            )
+          : null,
       body: Padding(
         padding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 28.0),
         child: Column(
@@ -194,23 +194,18 @@ class _ReminderViewState extends State<ReminderView> {
               keyboardType: TextInputType.multiline,
               maxLines: null,
             ),
-            GestureDetector(
-              onTap: () {
-                _selectDate();
-              },
-              child: Row(
-                children: [
-                  Padding(
-                    padding: EdgeInsetsGeometry.fromLTRB(0, 0, 8.0, 0),
-                    child: Icon(Icons.calendar_month),
-                  ),
-                  Text(
-                    _noteDeadlineDate == null
-                        ? "Add a deadline"
-                        : "${_noteDeadlineDate!.day}/${_noteDeadlineDate!.month}/${_noteDeadlineDate!.year} ${_noteDeadlineDate!.hour < 10 ? _noteDeadlineDate!.hour.toString().padLeft(2, '0') : _noteDeadlineDate!.hour}:${_noteDeadlineDate!.minute < 10 ? _noteDeadlineDate!.minute.toString().padLeft(2, '0') : _noteDeadlineDate!.minute}",
-                  ),
-                ],
-              ),
+            Row(
+              children: [
+                Padding(
+                  padding: EdgeInsetsGeometry.fromLTRB(0, 0, 8.0, 0),
+                  child: Icon(Icons.notifications),
+                ),
+                Text(
+                  _noteDeadlineDate == null
+                      ? "No deadline"
+                      : "${_noteDeadlineDate!.day}/${_noteDeadlineDate!.month}/${_noteDeadlineDate!.year} ${_noteDeadlineDate!.hour < 10 ? _noteDeadlineDate!.hour.toString().padLeft(2, '0') : _noteDeadlineDate!.hour}:${_noteDeadlineDate!.minute < 10 ? _noteDeadlineDate!.minute.toString().padLeft(2, '0') : _noteDeadlineDate!.minute}",
+                ),
+              ],
             ),
             Row(
               children: _hasTag
@@ -219,7 +214,6 @@ class _ReminderViewState extends State<ReminderView> {
                         label: const Text('Aaron Burr'),
                         shape: StadiumBorder(),
                       ),
-                      Icon(Icons.add),
                     ]
                   : [GestureDetector(onTap: () {}, child: Text("+ Add a tag"))],
             ),
@@ -249,6 +243,28 @@ class _ReminderViewState extends State<ReminderView> {
 // }
 
 // class _TagModifyAlert extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return AlertDialog();
+//   }
+// }
+
+// class TagChooseDialog extends StatefulWidget {
+//   const TagChooseDialog({super.key});
+
+//   @override
+//   State<TagChooseDialog> createState() => _TagChooseDialogState();
+// }
+
+// class _TagChooseDialogState extends State<TagChooseDialog> {
+//   late final AppDatabase _db;
+
+//   @override
+//   void didChangeDependencies() {
+//     _db = context.read<AppDatabase>();
+//     super.didChangeDependencies();
+//   }
+
 //   @override
 //   Widget build(BuildContext context) {
 //     return AlertDialog();
