@@ -89,7 +89,7 @@ class _ReminderListState extends State<ReminderList> {
                     itemCount: notes.length,
                     itemBuilder: (context, index) {
                       final note = notes[index];
-                      return _ReminderCard(rowObject: note);
+                      return ReminderCard(rowObject: note);
                     },
                   );
                 } else {
@@ -104,16 +104,16 @@ class _ReminderListState extends State<ReminderList> {
   }
 }
 
-class _ReminderCard extends StatefulWidget {
+class ReminderCard extends StatefulWidget {
   final NoteData _rowObject;
 
-  const _ReminderCard({required this._rowObject});
+  const ReminderCard({required this._rowObject});
 
   @override
-  State<_ReminderCard> createState() => _ReminderCardState();
+  State<ReminderCard> createState() => ReminderCardState();
 }
 
-class _ReminderCardState extends State<_ReminderCard> {
+class ReminderCardState extends State<ReminderCard> {
   @override
   void initState() {
     super.initState();

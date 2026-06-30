@@ -65,6 +65,16 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
+  // Assisted with AI too because Drift documentation is confusing
+  Stream<List<NoteData>> watchNotesByTag({required int tagId}) {
+    return customSelect(
+      //Turns out Drift uses snake case. BRUUHHH
+      'SELECT * FROM note WHERE id IN (SELECT note_id FROM note_tag WHERE tag_id = ?)',
+      variables: [Variable(tagId)],
+      readsFrom: {note, noteTag},
+    ).map((row) => note.map(row.data)).watch();
+  }
+
   Future<NoteData> getNoteByID(int id) async =>
       await managers.note.filter((t) => t.id.equals(id)).getSingle();
 
