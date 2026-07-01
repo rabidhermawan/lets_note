@@ -26,34 +26,47 @@ class _ReminderTagState extends State<ReminderTag> {
                   TextEditingController();
               bool doAddTag = await showDialog(
                 context: context,
-                builder: (context) => AlertDialog(
-                  title: Text("Add a tag"),
-                  content: TextFormField(
-                    controller: tagController,
-                    decoration: InputDecoration(
-                      hint: Text("New tag"),
-                      // border: InputBorder.none,
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        print("TAG: ${tagController.text}");
-                        Navigator.pop(context, true);
+                builder: (context) => StatefulBuilder(
+                  builder: (context, setState) => AlertDialog(
+                    title: Text("Add a tag"),
+                    content: TextFormField(
+                      controller: tagController,
+                      decoration: InputDecoration(
+                        hint: Text("New tag"),
+                        // border: InputBorder.none,
+                      ),
+                      onChanged: (value) {
+                        setState(() {});
                       },
-                      child: const Text('OK'),
                     ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel'),
-                    ),
-                  ],
+                    actions: [
+                      TextButton(
+                        onPressed: tagController.text.trim().isNotEmpty
+                            ? () {
+                                Navigator.pop(context, true);
+                              }
+                            : null,
+                        child: const Text('OK'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                    ],
+                  ),
                 ),
               );
               if (doAddTag) {
                 _db.insertOrUpdateTag(
                   TagCompanion(name: Value(tagController.text)),
                 );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${tagController.text} tag created!'),
+                    ),
+                  );
+                }
               }
             },
             icon: Icon(Icons.add_circle_outline_outlined),

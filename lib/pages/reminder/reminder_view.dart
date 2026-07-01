@@ -34,9 +34,12 @@ class _ReminderViewState extends State<ReminderView> {
   bool _toDelete = false;
 
   Future<void> _loadTag() async {
-    final fetchedTags = await _db.getAllTagWithCheck(
-      widget._rowObject.id.value,
-    );
+    final int? noteId = widget._rowObject.id.present
+        ? widget._rowObject.id.value
+        : null;
+
+    final fetchedTags = await _db.getAllTagWithCheck(noteId);
+
     setState(() {
       _allTagWithCheck = fetchedTags;
     });
@@ -62,6 +65,30 @@ class _ReminderViewState extends State<ReminderView> {
     super.initState();
   }
 
+  Future<void> _insertNoteAndTag() async {
+    final int noteId = await _db.insertOrUpdateNote(
+      widget._rowObject.copyWith(
+        title: Value(_noteTitleController.text.toString()),
+        content: Value(_noteContentController.text.toString()),
+        dateReminder: Value(_noteDeadlineDate),
+        reminderComplete: Value(_reminderComplete!),
+      ),
+    );
+
+    await _db.insertOrUpdateTagOfNoteBulk(
+      noteId: noteId,
+      tagEntry: _allTagWithCheck
+          .where((tag) => tag["isChecked"] == true)
+          .map(
+            (tag) => NoteTagCompanion(
+              noteId: widget._rowObject.id,
+              tagId: Value(tag["id"]),
+            ),
+          )
+          .toList(),
+    );
+  }
+
   @override
   void dispose() {
     if (_toDelete) {
@@ -69,24 +96,9 @@ class _ReminderViewState extends State<ReminderView> {
     } else if (!(widget.isNew &&
         _noteTitleController.text.toString() == "" &&
         _noteContentController.text.toString() == "" &&
-        _noteDeadlineDate == null)) {
-      _db.insertOrUpdateNoteTag(
-        widget._rowObject.copyWith(
-          title: Value(_noteTitleController.text.toString()),
-          content: Value(_noteContentController.text.toString()),
-          dateReminder: Value(_noteDeadlineDate),
-          reminderComplete: Value(_reminderComplete!),
-        ),
-        _allTagWithCheck
-            .where((tag) => tag["isChecked"] == true)
-            .map(
-              (tag) => NoteTagCompanion(
-                noteId: widget._rowObject.id,
-                tagId: Value(tag["id"]),
-              ),
-            )
-            .toList(),
-      );
+        _noteDeadlineDate == null &&
+        _allTagWithCheck == [])) {
+      _insertNoteAndTag();
     }
 
     _noteTitleController.dispose();
@@ -214,7 +226,7 @@ class _ReminderViewState extends State<ReminderView> {
               maxLines: null,
             ),
             Padding(
-              padding: EdgeInsetsGeometry.fromLTRB(0, 0, 0, 8.0),
+              padding: EdgeInsetsGeometry.fromLTRB(0, 8, 0, 16.0),
               child: Row(
                 children: [
                   Padding(
@@ -245,7 +257,20 @@ class _ReminderViewState extends State<ReminderView> {
                           ),
                         )
                         .toList()
-                  : [const Text("No Tag")],
+                  : [
+                      Padding(
+                        padding: EdgeInsetsGeometry.fromLTRB(0, 8, 0, 16),
+                        child: Row(
+                          children: [
+                            Padding(
+                              padding: EdgeInsetsGeometry.fromLTRB(0, 0, 8, 0),
+                              child: Icon(Icons.label_outline),
+                            ),
+                            Text("No Tag"),
+                          ],
+                        ),
+                      ),
+                    ],
             ),
 
             TextFormField(
@@ -315,9 +340,6 @@ class _TagChooseDialogState extends State<_TagChooseDialog> {
       actions: [
         TextButton(
           onPressed: () {
-            for (var x in newTagList) {
-              print("Name: ${x["name"]}, isChecked: ${x["isChecked"]}");
-            }
             Navigator.pop(context, newTagList);
           },
           child: const Text('OK'),

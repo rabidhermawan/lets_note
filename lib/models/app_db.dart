@@ -26,20 +26,18 @@ class AppDatabase extends _$AppDatabase {
 
   // Create/Update
   Future<int> insertOrUpdateNote(NoteCompanion entry) {
-    return into(note).insertOnConflictUpdate(entry);
+    return managers.note.create((note) => entry, mode: InsertMode.replace);
   }
 
-  Future<void> insertOrUpdateNoteTag(
-    NoteCompanion noteEntry,
-    List<NoteTagCompanion> tagEntry,
-  ) async {
-    int noteTag = await managers.note.create(
-      (note) => noteEntry,
-      mode: InsertMode.replace,
-    );
-    await managers.noteTag.filter((f) => f.noteId.id(noteTag)).delete();
+  Future<void> insertOrUpdateTagOfNoteBulk({
+    required int noteId,
+    required List<NoteTagCompanion> tagEntry,
+  }) async {
+    await managers.noteTag.filter((f) => f.noteId.id(noteId)).delete();
     await managers.noteTag.bulkCreate(
-      (noteTag) => tagEntry,
+      (nt) => [
+        for (var x in tagEntry) nt(noteId: noteId, tagId: x.tagId.value),
+      ],
       mode: InsertMode.replace,
     );
   }
@@ -83,7 +81,14 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<TagData>> watchAllTag() => managers.tag.watch();
 
   // Assisted with AI
-  Future<List<Map<String, dynamic>>> getAllTagWithCheck(int id) async {
+  Future<List<Map<String, dynamic>>> getAllTagWithCheck(int? id) async {
+    if (id == null) {
+      final allTags = await select(tag).get();
+      return allTags
+          .map((t) => {"id": t.id, "name": t.name, "isChecked": false})
+          .toList();
+    }
+
     final query = select(tag).join([
       leftOuterJoin(
         noteTag,
