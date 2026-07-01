@@ -107,7 +107,7 @@ class _ReminderListState extends State<ReminderList> {
 class ReminderCard extends StatefulWidget {
   final NoteData _rowObject;
 
-  const ReminderCard({required this._rowObject});
+  const ReminderCard({super.key, required this._rowObject});
 
   @override
   State<ReminderCard> createState() => ReminderCardState();

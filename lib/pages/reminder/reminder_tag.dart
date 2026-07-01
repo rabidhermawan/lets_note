@@ -98,7 +98,7 @@ class _ReminderTagState extends State<ReminderTag> {
                         ),
                       );
                     },
-                    child: Container(
+                    child: SizedBox(
                       height: 50,
                       // color: Colors.amber[colorCodes[index]],
                       child: Center(

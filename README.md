@@ -1,17 +1,19 @@
-# lets_note
+# Let's Note
 
-A new Flutter project.
+A streamlined productivity application built with Flutter that helps users effectively manage their personal notes and tasks. It functions as a digital workspace where users can jot down thoughts, categorize them with tags, set deadline reminders, and easily filter their information.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+* **Note Management:** Create, edit, and delete notes. Notes serve as actionable items where you can write titles and detailed content.
+* **Tagging System:** Create custom tags and assign them to notes for logical grouping (e.g., "Work," "School," "Groceries").
+* **Integrated Reminders:** Assign specific deadlines to notes using an intuitive date and time picker. Mark notes as "Complete" or "Not Complete" directly from the home screen.
+* **Smart Filtering:** Quickly narrow down your workspace by filtering notes based on their completion status (All, Done, Not Done) or by their associated tags.
 
-A few resources to get you started if this is your first Flutter project:
+## Tech Stack
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+This application follows the **Model-View-Controller (MVC)** architectural pattern, ensuring a clean separation between the User Interface and the database logic.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+* **Frontend (View):** [Flutter](https://flutter.dev/) & Dart
+* **Local Backend / ORM (Controller):** [Drift](https://drift.simonbinder.eu/) 
+* **Database (Model):** SQLite (managed via Drift)
+* **Time Management:** Omni Datetime Picker (for deadline selection)

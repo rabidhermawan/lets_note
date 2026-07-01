@@ -149,11 +149,38 @@ class _ReminderViewState extends State<ReminderView> {
 
           IconButton(
             icon: _noteDeadlineDate == null
-                ? Icon(Icons.notifications_off_outlined)
-                : Icon(Icons.notifications_outlined),
+                ? Icon(Icons.notifications_outlined)
+                : Icon(Icons.notifications_off_outlined),
             tooltip: 'Toggle the deadline',
-            onPressed: () {
-              _selectDate();
+            onPressed: () async {
+              if (_noteDeadlineDate == null) {
+                _selectDate();
+              } else {
+                showDialog(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    title: Text("Delete Deadline"),
+                    content: const Text(
+                      "Are you sure you want to remove the deadline?",
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _noteDeadlineDate = null;
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: const Text('OK'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
+                    ],
+                  ),
+                );
+              }
             },
           ),
           if (!widget.isNew)
@@ -313,7 +340,7 @@ class _TagChooseDialogState extends State<_TagChooseDialog> {
                 // padding: const EdgeInsets.all(4),
                 itemCount: newTagList.length,
                 itemBuilder: (BuildContext context, int index) {
-                  return Container(
+                  return SizedBox(
                     height: 50,
                     // color: Colors.amber[colorCodes[index]],
                     child: Center(
